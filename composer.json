@@ -1,5 +1,5 @@
 {
-    "name": "lifo101/remote-control",
+    "name": "lifo/remote-control",
     "description": "Remote control for network devices",
     "keywords": ["remote", "control", "expect", "cisco", "network", "ssh", "telnet"],
     "type": "library",
