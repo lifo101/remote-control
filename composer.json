@@ -1,0 +1,24 @@
+{
+    "name": "lifo101/remote-control",
+    "description": "Remote control for network devices",
+    "keywords": ["remote", "control", "expect", "cisco", "network", "ssh", "telnet"],
+    "type": "library",
+    "license": "Apache2",
+    "authors": [
+        {
+            "name": "Jason Morriss",
+            "email": "lifo2013@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "ext-expect": "*"
+    },
+    "autoload": {
+        "psr-0": { "Lifo\\RemoteControl\\": "src/" }
+    },
+    "extra": {
+        "branch-alias": {
+        }
+    }
+}
