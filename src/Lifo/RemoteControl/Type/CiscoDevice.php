@@ -25,8 +25,10 @@ class CiscoDevice extends NetworkDevice
 {
     public function __construct($options = array())
     {
+        $options = array_merge(array(
+            'prompt' => '[a-zA-Z0-9._-]+ ?(\(config[^\)]*\))? ?[$#>] ?(\(enable\))? *$',
+        ), $options);
         parent::__construct($options);
-        $this->options['prompt'] = '[a-zA-Z0-9._-]+ ?(\(config[^\)]*\))? ?[$#>] ?(\(enable\))? *$';
     }
 
     // @todo Implement cisco specific features like:
