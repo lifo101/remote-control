@@ -164,7 +164,7 @@ class NetworkDevice
         ));
 
         // level: 0=failed, 1=logged in, 2=enabled
-        $this->level = $level;
+        $this->userLevel = $level;
         return $level;
     }
 
