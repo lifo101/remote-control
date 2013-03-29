@@ -253,6 +253,25 @@ class NetworkDevice
         return $this->remote->write($str, $options);
     }
 
+    /**
+     * shortcut to toggle STDOUT logging
+     *
+     * @param boolean $value New verbose setting
+     * @return boolean Previous setting
+     */
+    public function verbose($value)
+    {
+        $old = $this->options['remote_control_options']['log_stdout'];
+        $this->options['remote_control_options']['log_stdout'] = $value;
+        if ($this->remote) {
+            $options = $this->remote->getOptions();
+            $old = $options['log_stdout'];
+            $options['log_stdout'] = $value;
+            $this->remote->setOptions($options);
+        }
+        return $old;
+    }
+
     public static function buildCommand(array $options)
     {
         $options = array_merge(self::$DEFAULT_OPTIONS, $options);
