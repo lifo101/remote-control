@@ -159,9 +159,9 @@ class RemoteControl implements RemoteControlInterface
     {
         $options = array_merge($this->options, ($options instanceof \ArrayAccess or is_array($options)) ? $options : array());
 
-        // set options ...
+        // apply options ...
         if ($options['timeout'] !== null) {
-            ini_set('expect.timeout', $options['timeout']);
+            $this->setTimeout($options['timeout']);
         }
         if ($options['clear_output_on_wait']) {
             $this->output = '';
@@ -375,9 +375,27 @@ class RemoteControl implements RemoteControlInterface
         return $this;
     }
 
-    public function setOptions(array $options)
+    /**
+     * Get current options
+     *
+     * @return array Current options
+     */
+    public function getOptions()
     {
-        $this->options = array_merge(self::$DEFAULT_OPTIONS, $options);
+        return $this->options;
+    }
+
+    /**
+     * Set new options
+     *
+     * Defaults are merged with the new set of options so any missing values
+     * are set to their defaults.
+     *
+     * @param array $options New options.
+     */
+    public function setOptions($options)
+    {
+        $this->options = array_merge(self::$DEFAULT_OPTIONS, (array)$options);
         return $this;
     }
 

@@ -30,4 +30,8 @@ interface RemoteControlInterface
     public function getStream();
 
     public function getOutput();
+
+    public function getOptions();
+
+    public function setOptions($options);
 }
