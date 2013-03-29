@@ -28,7 +28,7 @@ _placeholder_
 
 ## Examples
 
-**WIP:** _API has not been fully fleshed out yet._
+See the [examples][examples] directory for more runnable examples.
 
 ```php
 use Lifo\RemoteControl\RemoteControl;
@@ -51,7 +51,7 @@ $res = $rc->wait(array(
     //    REGEX/GLOB/STR => Closure or mixed value
     array($prompt        => true ),
     array('yes/no\)\?'   => function($rc){ $rc->writeln('yes'); } ),
-    array('[Pp]assword:' => function($rc){ $rc->writeln('3lemen7portal'); } ),
+    array('[Pp]assword:' => function($rc){ $rc->writeln('password'); } ),
 ));
 
 // attempt another command and wait for prompt
@@ -90,3 +90,4 @@ echo $d->send("show version");
   [composer]: http://getcomposer.org/ "Composer"
   [git]: http://github.com/ "Github"
   [cisco-automation]: http://github.com/lifo101/cisco-automation "Perl library for connecting to Cisco devices via Expect"
+  [examples]: examples
