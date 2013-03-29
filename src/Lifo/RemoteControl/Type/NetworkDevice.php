@@ -232,13 +232,13 @@ class NetworkDevice
         // extra patterns from caller
         $patterns = isset($options['patterns']) ? $options['patterns'] : array();
 
-        array_merge(array(
+        $patterns = array_merge(array(
             array('<--- More ---> *$' => function($rc){ $rc->write(" "); }),
             array(' +--More-- *$' => function($rc){ $rc->write(" "); }),
             array($options['prompt'] => true),
         ), $patterns);
 
-        $this->remote->wait($patterns, $options);
+        $this->lastWaitStatus = $this->remote->wait($patterns, $options);
 
         return $this->remote->getOutput();
     }
