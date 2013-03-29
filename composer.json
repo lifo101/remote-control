@@ -3,7 +3,7 @@
     "description": "Remote control for network devices",
     "keywords": ["remote", "control", "expect", "cisco", "network", "ssh", "telnet"],
     "type": "library",
-    "license": "Apache2",
+    "license": "MIT",
     "authors": [
         {
             "name": "Jason Morriss",
