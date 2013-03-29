@@ -1,8 +1,7 @@
 <?php
 /**
- * This snippet shows a "hello world" bare bones example of how to use the
- * library using the NetworkDevice remote control and assumes the library was
- * installed via {@link http://getcomposer.org Composer}
+ * This snippet shows a "hello world" bare bones example of connecting to a
+ * host and issuing some commands using the NetworkDevice remote control.
  *
  * @author Jason Morriss <lifo2013@gmail.com>
  * @since 1.0
@@ -19,7 +18,6 @@ $password = 'password';
 $d = new NetworkDevice(array(
     'protocol' => 'ssh',
     'host' => 'localhost',
-    'prompt' => '[#$] *$',      // a good prompt REGEX is required
     'username' => $username,    // username must be defined here
     // if no password is given here it must be passed to login() instead
     //'password' => $password,

@@ -26,7 +26,7 @@ class NetworkDevice
     const LOGIN_EXEC = 2;
 
     public static $DEFAULT_OPTIONS = array(
-        'prompt'                 => '[a-zA-Z0-9._-]+ ?(\(config[^\)]*\))? ?[$#>] ?(\(enable\))? *$',
+        'prompt'                 => '[#$] *$',
         'remote_control_class'   => null,
         'remote_control_options' => null,
         'protocol'               => 'ssh',
