@@ -155,7 +155,7 @@ class RemoteControl implements RemoteControlInterface
      * @return mixed Returns the return code of the last pattern closure or
      *               false on TIMEOUT or EOF.
      */
-    public function wait($pattern, $options = array())
+    public function wait($patterns, $options = array())
     {
         $options = array_merge($this->options, ($options instanceof \ArrayAccess or is_array($options)) ? $options : array());
 
@@ -168,7 +168,7 @@ class RemoteControl implements RemoteControlInterface
         }
         $context = $options['wait_context'] ?: $this;
 
-        list($cases, $callbacks) = $this->compilePatterns($pattern);
+        list($cases, $callbacks) = $this->compilePatterns($patterns);
 
         $this->waitDone = false;
         while (true) {
@@ -180,7 +180,7 @@ class RemoteControl implements RemoteControlInterface
             $this->output .= $this->before;         // capture combined output
 
             // @todo is this actually useful since the user can enable the ini
-            // expect.loguser?
+            // expect.loguser? This allows it to be real-time and unbuffered.
             if ($options['log_stdout']) {
                 echo $this->before;
             }
@@ -247,7 +247,7 @@ class RemoteControl implements RemoteControlInterface
      */
     public function writeln($str, $options = array())
     {
-        return $this->write($str . $this->options['eol'], $options);
+        return $this->write($str . (isset($options['eol']) ? $options['eol'] : $this->options['eol']), $options);
     }
 
     /**
