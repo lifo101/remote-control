@@ -20,11 +20,30 @@ The PHP [Expect][expect] library is extremely limited and does not even come clo
 
 ### Installation
 
-[Composer][composer] is the recommended way to download and maintain your copy of the library. Using [Github][git] directly is also a reasonable option, however, you'll have to manually download future updates.
+[Composer][composer] is the recommended way to download and maintain your copy of the library (using [packagist.org](https://packagist.org/)).
+Using [Github][git] directly is also a reasonable option, however, you'll have to manually create an autoloader for the classes or `include` them on your own (ugly!)
 
 #### Composer Installation
 
-_placeholder_
+1. Add "lifo/remote-control" to your project composer.json file:
+
+    ```json
+    {
+        "require": {
+            "lifo/remote-control": "dev-master"
+        }
+    }
+    ```
+    
+2. Run composer update: `php composer.phar update lifo/remote-control`
+
+#### GitHub Installatin
+
+1. Clone the remote-control repository:
+
+    `git clone git://github.com/lifo101/remote-control.git`
+
+2. Add `Lifo/RemoteControl` to your project autoloader as-needed.
 
 ## Examples
 
@@ -34,7 +53,7 @@ See the [examples][examples] directory for more runnable examples.
 use Lifo\RemoteControl\RemoteControl;
 use Lifo\RemoteControl\Type\NetworkDevice;
 
-// Raw control object for low level access
+// Raw control object for low level access (see 2nd example for an easier approach)
 $rc = new RemoteControl("ssh username@hostname", array(
     'auto_start' => true,
     'log_stdout' => true,
@@ -58,7 +77,9 @@ $res = $rc->wait(array(
 $rc->writeln("show clock");
 $rc->wait($prompt);
 
-// or ...
+// ----------------------------------------------------------
+// OR ... (this is preferred over the low-level method above)
+// ----------------------------------------------------------
 
 // High level control object for easier access of network type devices
 $d = new NetworkDevice(array(
@@ -72,9 +93,10 @@ $d = new NetworkDevice(array(
     //    'log_stdout' => true,
     //)
 ));
+$d->verbose(true); // for debugging/troubleshooting only; same as setting log_stdout = true
 
 // login method handles a lot of variations for different devices and 
-// will enable if possible.
+// will enable if possible. You can call $d->enable() manually too.
 if (!$d->login()) {
     die("Error logging in!\n");
 }
