@@ -317,6 +317,11 @@ class NetworkDevice
         return $this->remote;
     }
 
+    public function getOutput()
+    {
+        return $this->remote->getOutput();
+    }
+
     /**
      * Set a configuration option.
      *
