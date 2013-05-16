@@ -51,6 +51,7 @@ class RemoteControl implements RemoteControlInterface
 
     private $logFile;
     private $logFilePos;
+    private $output;
 
     /**
      * Public constructor
@@ -61,6 +62,7 @@ class RemoteControl implements RemoteControlInterface
     public function __construct($command = null, $options = null)
     {
         $this->before = '';
+        $this->output = '';
 
         $this->options = array_merge(self::$DEFAULT_OPTIONS, ($options instanceof \ArrayAccess or is_array($options)) ? $options : array());
 
