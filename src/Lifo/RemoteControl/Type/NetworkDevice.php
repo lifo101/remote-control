@@ -21,17 +21,19 @@ use Lifo\RemoteControl\Exception\RemoteControlException;
  */
 class NetworkDevice
 {
+    const CTRL_Z = "\x1A";
+
     const LOGIN_FAIL = 0;
     const LOGIN_USER = 1;
     const LOGIN_EXEC = 2;
 
     public static $DEFAULT_OPTIONS = array(
-        'prompt'                 => '[#$] *$',
-        'remote_control_class'   => null,
-        'remote_control_options' => null,
-        'protocol'               => 'ssh',
-        'cmdline'                => null,        // extra command line arguments
-        'port'                   => null,
+        'prompt'                    => '[#$] *$',
+        'remote_control_class'      => null,
+        'remote_control_options'    => null,
+        'protocol'                  => 'ssh',
+        'cmdline'                   => null,    // extra command line arguments
+        'port'                      => null,
     );
 
     protected $options;
@@ -143,20 +145,24 @@ class NetworkDevice
 
         $level = 0;
         $pw = $password;
+        $attempt = 0;
 
         $res = $this->remote->wait(array(
             array('Connection refused' => true ),
             array('yes/no\)\?' => function($rc) { $rc->writeln('yes'); }),
-            array('Host key verification failed' => true ),
-            array('Permission denied' => true ),
-            array('[Pp]assword:' => function($rc) use (&$level, &$pw) {
+            array('Host key verification failed' => true ),         // level=0
+            array('Permission denied' => true ),                    // level=0
+            array('Access denied' => true ),                        // level=1
+            array('[Pp]assword:' => function($rc) use (&$pw, &$attempt) {
+                $attempt++;
                 $rc->writeln($pw);
             }),
-            array($options['prompt'] => function($rc) use (&$level, &$pw, $enable) {
+            array($options['prompt'] => function($rc) use (&$level, &$pw, &$attempt, &$enable) {
                 $level++;
                 if ($enable !== null and $level == 1) {
                     $rc->writeln("enable");
                     $pw = $enable;
+                    $attempt = 0;
                     return; // continue
                 }
                 return true; // done; logged in
@@ -186,7 +192,7 @@ class NetworkDevice
 
         $ok = false;
         $attempt = 0;
-        $this->remote->writeln('enable');
+        $this->writeln('enable');
         $res = $this->remote->wait(array(
             array('Permission denied' => true ), // bad password
             array('ERROR: %' => true ), // already enabled so command fails (cisco)
@@ -221,11 +227,12 @@ class NetworkDevice
         $this->connect();
 
         $options = array_merge($this->options, (array)$options);
+        if (!isset($options['wait'])) {
+            $options['wait'] = true;
+        }
 
-        $wait = isset($options['no_wait']) ? !$options['no_wait'] : true;
-
-        $this->remote->writeln($cmd, $options);
-        if (!$wait) {
+        $this->writeln($cmd, $options);
+        if (!$options['wait']) {
             return;
         }
 
@@ -240,11 +247,93 @@ class NetworkDevice
 
         $this->lastWaitStatus = $this->remote->wait($patterns, $options);
 
-        return $this->remote->getOutput();
+        return $this->getOutput();
+    }
+
+    /**
+     * Sends 1 or more lines to the device and returns all output captured after
+     * all lines have been sent (if wait_for_output is true). Special options
+     * are available to throttle the speed at which lines are sent to prevent
+     * overrunning the device with a long list of lines.
+     * This is useful for sending configurations.
+     *
+     * Use "max_lines" in the $options array to limit how many lines are sent
+     * before waiting for a prompt. Defaults to 1. Increasing this will speed
+     * up large batches of lines since Expect won't try and wait after every
+     * single line sent. But note; If you want to capture the output after
+     * calling this it's possible for some output to be missed if you don't
+     * properly wait afterwards since this function will return quicker then
+     * the remote device can send its output.
+     *
+     * @param mixed $lines An array or string of lines to send. If a string is
+     *                     given it will be split on CRLF
+     * @param array$options Optional options array
+     */
+    public function sendLines($lines, $options = array())
+    {
+        if ($lines === null) {
+            return;
+        }
+
+        if (!is_array($lines)) {
+            $lines = preg_split('/\r?\n/', $lines);
+        }
+
+        $options = array_merge($this->options, (array)$options);
+        if (!isset($options['wait_for_output'])) {
+            $options['wait_for_output'] = true;
+        }
+        if (!isset($options['max_lines'])) {
+            $options['max_lines'] = 1;
+        }
+
+        // never clear on wait so we can get the full output after all lines are sent.
+        $options['clear_output_on_wait'] = false;
+
+        $output = '';
+        $cnt = 0;
+        $waitFor = 0;
+        while (!empty($lines)) {
+            $cmd = array_shift($lines);
+            if (++$cnt > $options['max_lines']) {
+                $cnt = 1;
+            }
+            $waitFor++;
+
+            //$options['wait'] = (empty($lines) or ($options['max_lines'] and $cnt >= $options['max_lines']));
+            $options['wait'] = ($options['max_lines'] and $cnt >= $options['max_lines']);
+            if ($options['wait']) {
+                $waitFor--;
+            }
+            $this->send($cmd, $options);
+            if (in_array($this->lastWaitStatus, array(EXP_TIMEOUT, EXP_EOF), true)) {
+                break;
+            }
+        }
+
+        if ($options['wait_for_output']) {
+            // @todo This doesn't really help all that much and isn't fullproof.
+            //       Refactor this or get rid of it completely.
+
+            // if we didn't wait for each line in the loop above then we need to
+            // wait for JUST the prompt to return or the output returned won't
+            // necessarily be complete yet because the remote end hasn't sent
+            // everything yet.
+            if ($waitFor > 0) {
+                $res = $this->remote->wait(array(
+                    array($options['prompt'] . '$' => true),
+                ));
+            }
+
+            return $this->getOutput();
+        }
     }
 
     public function writeln($str, $options = array())
     {
+        if ($str == self::CTRL_Z) {
+            $options['eol'] = '';
+        }
         return $this->remote->writeln($str, $options);
     }
 
@@ -276,7 +365,7 @@ class NetworkDevice
     {
         $options = array_merge(self::$DEFAULT_OPTIONS, $options);
 
-        if (!isset($options['host'])) {
+        if (empty($options['host'])) {
             throw RemoteControlException("Unable to build command: No \"host\" defined.");
         }
 
@@ -289,10 +378,10 @@ class NetworkDevice
     protected static function buildSSHCommand($host, $username, array $options)
     {
         $cmd = $options['protocol'] ?: 'ssh';
-        if (isset($options['cmdline'])) {
+        if (!empty($options['cmdline'])) {
             $cmd .= " " . $options['cmdline'];
         }
-        if (isset($options['port']) and $options['port'] != '22') {
+        if (!empty($options['port']) and $options['port'] != '22') {
             $cmd .= " -p " . $options['port'];
         }
         $cmd .= " $username@$host";
@@ -302,11 +391,11 @@ class NetworkDevice
     protected static function buildTELNETCommand($host, $username, array $options)
     {
         $cmd = $options['protocol'] ?: 'telnet';
-        if (isset($options['cmdline'])) {
+        if (!empty($options['cmdline'])) {
             $cmd .= " " . $options['cmdline'];
         }
         $cmd .= " -l $username $host";
-        if (isset($options['port'])) {
+        if (!empty($options['port']) and $options['port'] != '23') {
             $cmd .= " " . $options['port'];
         }
         return escapeshellcmd($cmd);
@@ -320,6 +409,11 @@ class NetworkDevice
     public function getOutput()
     {
         return $this->remote->getOutput();
+    }
+
+    public function getUserLevel()
+    {
+        return $this->userLevel;
     }
 
     /**
