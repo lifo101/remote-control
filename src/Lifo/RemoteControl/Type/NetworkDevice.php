@@ -128,7 +128,7 @@ class NetworkDevice
 
         // do nothing if the user is already logged in
         if ($this->userLevel > self::LOGIN_FAIL) {
-            return true;
+            return $this->userLevel;
         }
 
         if ($password === null) {
