@@ -10,9 +10,23 @@
 namespace Lifo\RemoteControl\Exception;
 
 /**
- * Main RemoteControl factory
+ * RemoteControl Exception
  *
  * @author Jason Morriss <lifo2013@gmail.com>
  * @since 1.0
  */
-class RemoteControlException extends \Exception { }
+class RemoteControlException extends \Exception
+{
+    protected $output;
+
+    public function setOutput($output)
+    {
+        $this->output = $output;
+        return $this;
+    }
+
+    public function getOutput()
+    {
+        return $this->output;
+    }
+}
