@@ -21,7 +21,8 @@ use Lifo\RemoteControl\Exception\RemoteControlException;
  */
 class NetworkDevice
 {
-    const CTRL_Z = "\x1A";
+    const BACKSPACE = "\x08";
+    const CTRL_Z    = "\x1A";
 
     const LOGIN_FAIL = 0;
     const LOGIN_USER = 1;
@@ -30,10 +31,11 @@ class NetworkDevice
     public static $DEFAULT_OPTIONS = array(
         'prompt'                    => '[#$] *$',
         'remote_control_class'      => null,
-        'remote_control_options'    => null,
+        'remote_control_options'    => array(),
         'protocol'                  => 'ssh',
         'cmdline'                   => null,    // extra command line arguments
         'port'                      => null,
+        'username'                  => null,
     );
 
     protected $options;
@@ -350,7 +352,7 @@ class NetworkDevice
      */
     public function verbose($value)
     {
-        $old = $this->options['remote_control_options']['log_stdout'];
+        $old = empty($this->options['remote_control_options']['log_stdout']) ? null : $this->options['remote_control_options']['log_stdout'];
         $this->options['remote_control_options']['log_stdout'] = $value;
         if ($this->remote) {
             $options = $this->remote->getOptions();
@@ -378,26 +380,41 @@ class NetworkDevice
     protected static function buildSSHCommand($host, $username, array $options)
     {
         $cmd = $options['protocol'] ?: 'ssh';
-        if (!empty($options['cmdline'])) {
-            $cmd .= " " . $options['cmdline'];
-        }
         if (!empty($options['port']) and $options['port'] != '22') {
             $cmd .= " -p " . $options['port'];
         }
-        $cmd .= " $username@$host";
+
+        if ($username !== null and $username !== false and $username !== '') {
+            $cmd .= " -l $username";
+        }
+
+        if (!empty($options['cmdline'])) {
+            $cmd .= " " . $options['cmdline'];
+        }
+
+        $cmd .= " " . $host;
+
         return escapeshellcmd($cmd);
     }
 
     protected static function buildTELNETCommand($host, $username, array $options)
     {
         $cmd = $options['protocol'] ?: 'telnet';
+
         if (!empty($options['cmdline'])) {
             $cmd .= " " . $options['cmdline'];
         }
-        $cmd .= " -l $username $host";
+
+        if ($username !== null and $username !== false and $username !== '') {
+            $cmd .= " -l $username";
+        }
+
+        $cmd .= " " . $host;
+
         if (!empty($options['port']) and $options['port'] != '23') {
             $cmd .= " " . $options['port'];
         }
+
         return escapeshellcmd($cmd);
     }
 

@@ -55,7 +55,7 @@ class CiscoDevice extends NetworkDevice
         $options = array_merge($this->options, is_array($options) ? $options : array('normalize_output' => $options));
 
         if ($output !== null and $options['normalize_output']) {
-            // Remove "More" prompts
+            // Remove "More" prompts and extra carrage returns "\r"
             $output = str_replace("\r", "", preg_replace(array(
                 '/<--- More --->\r\s{14}\r/',       // cisco firewalls
                 '/ --More-- \x08{9}\s{8}\x08{9}/',  // cisco routers
@@ -64,7 +64,7 @@ class CiscoDevice extends NetworkDevice
             $str = '';
             foreach (explode("\n", $output) as $line) {
                 // short-cut; no "^H" (backspaces) found so just continue
-                if (strpos($line, "\x08") == -1) {
+                if (strpos($line, self::BACKSPACE) == -1) {
                     $str .= $line . "\n";
                     continue;
                 }
@@ -84,7 +84,7 @@ class CiscoDevice extends NetworkDevice
                         // In NORMAL state we simply eat characters until we
                         // see a ^H (backspace) character.
                         case 'NORMAL':
-                            if ($c !== "\x08") {
+                            if ($c !== self::BACKSPACE) {
                                 $str .= $c;
                                 break;
                             } else {
@@ -97,7 +97,7 @@ class CiscoDevice extends NetworkDevice
                         // REVERSE1 state occurs after NORMAL and we eat ^H
                         // characters until we hit a normal character.
                         case 'REVERSE1':
-                            if ($c === "\x08") {
+                            if ($c === self::BACKSPACE) {
                                 break;
                             } else {
                                 $forward = '';
@@ -108,7 +108,7 @@ class CiscoDevice extends NetworkDevice
                         // FORWARD state occurs after REVERSE1 and eats chars
                         // until a ^H is seen.
                         case 'FORWARD':
-                            if ($c !== "\x08") {
+                            if ($c !== self::BACKSPACE) {
                                 $forward .= $c;
                                 break;
                             } else {
@@ -119,7 +119,7 @@ class CiscoDevice extends NetworkDevice
                         // REVERSE2 state occurs after FORWARD and eats ^H
                         // until we hit a normal character.
                         case 'REVERSE2':
-                            if ($c === "\x08") {
+                            if ($c === self::BACKSPACE) {
                                 $bs_length ++;
                             } else {
                                 if (!$bs_length_first) {
@@ -152,6 +152,9 @@ class CiscoDevice extends NetworkDevice
 
                 $str .= implode('', $parts) . "\n";
             } # foreach line
+
+            // replace <CTRL Z> with literal string "^Z"
+            $str = str_replace(self::CTRL_Z, "^Z", $str);
 
             return $str;
         }
