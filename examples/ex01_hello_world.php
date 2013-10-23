@@ -3,6 +3,8 @@
  * This snippet shows a "hello world" bare bones example of connecting to a
  * host and issuing some commands using the NetworkDevice remote control.
  *
+ * php ex01_hello_world.php 'password'
+ *
  * @author Jason Morriss <lifo2013@gmail.com>
  * @since 1.0
  */
@@ -11,8 +13,8 @@ include __DIR__ . "/autoload.php";
 
 use Lifo\RemoteControl\Type\NetworkDevice;
 
-$username = 'username';
-$password = 'password';
+$username = get_current_user();
+$password = @$argv[1] ?: getenv('PASSWORD') ?: 'password';
 
 // login to the localhost via ssh ...
 $d = new NetworkDevice(array(
