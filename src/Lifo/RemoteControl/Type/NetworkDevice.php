@@ -241,11 +241,11 @@ class NetworkDevice
         // extra patterns from caller
         $patterns = isset($options['patterns']) ? $options['patterns'] : array();
 
-        $patterns = array_merge(array(
+        $patterns = array_merge($patterns, array(
             array('<--- More ---> *$' => function($rc){ $rc->write(" "); }),
             array(' +--More-- *$' => function($rc){ $rc->write(" "); }),
             array($options['prompt'] => true),
-        ), $patterns);
+        ));
 
         $this->lastWaitStatus = $this->remote->wait($patterns, $options);
 
@@ -442,9 +442,7 @@ class NetworkDevice
      */
     public function setOption($name, $value)
     {
-        if (array_key_exists($name, $this->options)) {
-            $this->options[$name] = $value;
-        }
+        $this->options[$name] = $value;
         return $this;
     }
 
@@ -452,6 +450,25 @@ class NetworkDevice
     {
         $this->options = array_merge(self::$DEFAULT_OPTIONS, $options);
         return $this;
+    }
+
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
+    /**
+     * Get an option.
+     *
+     * @param string $name Name of option to return.
+     * @return mixed Returns the option value or null if it doesn't exist.
+     */
+    public function getOption($name)
+    {
+        if (isset($this->options[$name])) {
+            return $this->options[$name];
+        }
+        return null;
     }
 
 }
